@@ -5,6 +5,8 @@ using ProductPriceApp.Hubs;
 using ProductPriceApp.Services;
 using ProductPriceTracker.Hubs;
 using ProductPriceTracker.Services;
+using WebAppBackend.Hubs;
+using WebAppBackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,7 @@ builder.Services.AddLogging();
 builder.Services.AddSingleton<ElasticsearchService>();
 builder.Services.AddSingleton<ElasticSearchProductService>();
 builder.Services.AddSingleton<CircuitBreakerService>();
+builder.Services.AddSingleton<StockMarketService>();
 //builder.Services.AddSingleton<CustomCircuitBreaker>(provider =>
 //{
 //    var logger = provider.GetRequiredService<ILogger<CustomCircuitBreaker>>();
@@ -74,10 +77,26 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Map a specific route and apply the middleware only to this route
+app.Map("/WeatherForecast/demo", appBuilder =>
+{
+    appBuilder.UseMiddleware<TokenBucketRateLimiterMiddlewareService>(5, 5); // Max 5 requests per second
+    appBuilder.UseRouting();
+    appBuilder.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=WeatherForecast}/{action=GetDemo}");
+    });
+});
+
+
 app.MapHub<ProductHub>("/hubs/product");
 app.MapHub<ProductPriceHub>("/hubs/productprice");
 app.MapHub<CircuitBreakerHub>("/hubs/circuitbreakerhub");
 app.MapHub<GoldPriceHub>("/hubs/goldpriceshub");
+app.MapHub<RateLimiterHub>("/hubs/rateLimiterhub");
+app.MapHub<StockMarketHub>("hubs/stockmarkethub");
 app.MapControllers();
 app.UseCors("reactApp");
 

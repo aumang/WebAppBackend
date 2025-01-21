@@ -29,5 +29,11 @@ namespace ProductPriceTracker.Controllers
             })
             .ToArray();
         }
+
+            [HttpGet("demo")]
+            public IActionResult GetDemo()
+            {
+                return Ok("Request successful!");
+            }
     }
 }
